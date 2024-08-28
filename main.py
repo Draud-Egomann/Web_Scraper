@@ -62,6 +62,6 @@ def main(base_url, whitelist):
 
 if __name__ == "__main__":
     base_url = 'https://www.kauz.ch/'
-    whitelist = ['https://www.kauz.ch/services', 'https://www.kauz.ch/integration']
+    whitelist = ['/services', '/integration']
 
     main(base_url, whitelist)
