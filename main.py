@@ -28,40 +28,48 @@ def find_subpages(base_url, html_content, whitelist):
         href = link['href']
         full_url = urljoin(base_url, href)
 
-        if any(allowed_url in full_url for allowed_url in whitelist):
+        # Remove any trailing slash for consistent matching
+        if full_url.endswith('/'):
+            full_url = full_url[:-1]
+
+        # Check if the full URL ends with any of the whitelist items
+        if any(full_url.endswith(allowed_url) for allowed_url in whitelist):
             subpages.append(full_url)
 
     return list(set(subpages))  # removes duplicates
 
-def main(base_url, whitelist):
-    # generate root directory
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    base_url_name = base_url.replace("https://", "").replace("http://", "").replace("/", "")
+def sanitize_directory_name(name):
+    invalid_chars = [":", "*", "?", "\"", "<", ">", "|", "\\"]
+    for char in invalid_chars:
+        name = name.replace(char, "_")
+    return name
 
-    pages_directory = os.path.join("pages", f"{timestamp}_{base_url_name}")
+def main(base_url, whitelist):
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    sanitized_base_url_name = sanitize_directory_name(base_url.replace("https://", "").replace("http://", "").replace("/", ""))
+
+    pages_directory = os.path.join("pages", f"{timestamp}_{sanitized_base_url_name}")
     create_directory(pages_directory)
 
-    # download base page
     base_html = download_page(base_url)
     if base_html is None:
         return
 
-    # save index page
     save_html(base_html, os.path.join(pages_directory, 'index.html'))
 
-    # get subpages
     subpages = find_subpages(base_url, base_html, whitelist)
+    print(f"Found subpages: {subpages}")  # Debugging statement
+
     for subpage_url in subpages:
         html_content = download_page(subpage_url)
         if html_content:
-            # Generate subpage name
-            subpage_name = subpage_url.replace("https://", "").replace("http://", "").replace("/", "_")
+            subpage_name = sanitize_directory_name(subpage_url.replace("https://", "").replace("http://", "").replace("/", "_"))
             subpage_path = os.path.join(pages_directory, f"{subpage_name}.html")
             save_html(html_content, subpage_path)
             print(f"Content of {subpage_url} is downloaded and saved.")
 
 if __name__ == "__main__":
-    base_url = 'https://www.kauz.ch/'
-    whitelist = ['/services', '/integration']
+    base_url = ''
+    whitelist = []
 
     main(base_url, whitelist)
