@@ -44,6 +44,22 @@ def sanitize_directory_name(name):
         name = name.replace(char, "_")
     return name
 
+def embed_css(base_url, html_content):
+    soup = BeautifulSoup(html_content, 'html.parser')
+    css_links = soup.find_all('link', rel='stylesheet')
+    
+    for link in css_links:
+        css_url = urljoin(base_url, link['href'])
+        css_content = download_page(css_url)
+        
+        if css_content:
+            # Create a <style> tag with the downloaded CSS
+            style_tag = soup.new_tag('style')
+            style_tag.string = css_content
+            link.replace_with(style_tag)
+    
+    return str(soup)
+
 def main(base_url, whitelist):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     sanitized_base_url_name = sanitize_directory_name(base_url.replace("https://", "").replace("http://", "").replace("/", ""))
@@ -55,7 +71,9 @@ def main(base_url, whitelist):
     if base_html is None:
         return
 
-    save_html(base_html, os.path.join(pages_directory, 'index.html'))
+    # Embed CSS into the base page
+    base_html_with_css = embed_css(base_url, base_html)
+    save_html(base_html_with_css, os.path.join(pages_directory, 'index.html'))
 
     subpages = find_subpages(base_url, base_html, whitelist)
     print(f"Found subpages: {subpages}")  # Debugging statement
@@ -63,9 +81,11 @@ def main(base_url, whitelist):
     for subpage_url in subpages:
         html_content = download_page(subpage_url)
         if html_content:
+            # Embed CSS into the subpage
+            html_with_css = embed_css(base_url, html_content)
             subpage_name = sanitize_directory_name(subpage_url.replace("https://", "").replace("http://", "").replace("/", "_"))
             subpage_path = os.path.join(pages_directory, f"{subpage_name}.html")
-            save_html(html_content, subpage_path)
+            save_html(html_with_css, subpage_path)
             print(f"Content of {subpage_url} is downloaded and saved.")
 
 if __name__ == "__main__":
