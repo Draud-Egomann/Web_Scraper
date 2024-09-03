@@ -1,7 +1,7 @@
 import os
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 from datetime import datetime
 
 def create_directory(path):
@@ -63,6 +63,31 @@ def embed_css(base_url, html_content):
     
     return str(soup)
 
+def convert_links_to_absolute(base_url, page_directory, html_content):
+    soup = BeautifulSoup(html_content, 'html.parser')
+    links = soup.find_all('a', href=True)
+
+    for link in links:
+        href = link['href']
+        absolute_url = urljoin(base_url, href)
+
+        # Generate the local path to the file
+        parsed_url = urlparse(absolute_url)
+        local_filename = sanitize_directory_name(parsed_url.netloc + parsed_url.path)
+
+        # Replace the last slash in the path with an underscore
+        if '/' in local_filename:
+            last_slash_index = local_filename.rfind('/')
+            local_filename = local_filename[:last_slash_index] + '_' + local_filename[last_slash_index + 1:]
+
+        local_filename += ".html"
+        local_filepath = os.path.join(page_directory, local_filename)
+
+        # Update the href to the correct local file path
+        link['href'] = "file://" + os.path.abspath(local_filepath)
+
+    return str(soup)
+
 def main(base_url, whitelist):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     sanitized_base_url_name = sanitize_directory_name(base_url.replace("https://", "").replace("http://", "").replace("/", ""))
@@ -76,7 +101,10 @@ def main(base_url, whitelist):
 
     # Embed CSS into the base page
     base_html_with_css = embed_css(base_url, base_html)
-    save_html(base_html_with_css, os.path.join(pages_directory, 'index.html'))
+
+    # Convert links to absolute paths with .html suffix
+    base_html_with_links = convert_links_to_absolute(base_url, pages_directory, base_html_with_css)
+    save_html(base_html_with_links, os.path.join(pages_directory, 'index.html'))
 
     subpages = find_subpages(base_url, base_html, whitelist)
     print(f"Found subpages: {subpages}")  # Debugging statement
@@ -86,9 +114,13 @@ def main(base_url, whitelist):
         if html_content:
             # Embed CSS into the subpage
             html_with_css = embed_css(base_url, html_content)
+
+            # Convert links to absolute paths with .html suffix
+            html_with_links = convert_links_to_absolute(base_url, pages_directory, html_with_css)
+
             subpage_name = sanitize_directory_name(subpage_url.replace("https://", "").replace("http://", "").replace("/", "_"))
             subpage_path = os.path.join(pages_directory, f"{subpage_name}.html")
-            save_html(html_with_css, subpage_path)
+            save_html(html_with_links, subpage_path)
             print(f"Content of {subpage_url} is downloaded and saved.")
 
 if __name__ == "__main__":
