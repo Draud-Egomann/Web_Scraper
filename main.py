@@ -32,8 +32,11 @@ def find_subpages(base_url, html_content, whitelist):
         if full_url.endswith('/'):
             full_url = full_url[:-1]
 
-        # Check if the full URL ends with any of the whitelist items
-        if any(full_url.endswith(allowed_url) for allowed_url in whitelist):
+        # If the whitelist is empty, add all subpages
+        if not whitelist:
+            subpages.append(full_url)
+        # Otherwise, check if the full URL ends with any of the whitelist items
+        elif any(full_url.endswith(allowed_url) for allowed_url in whitelist):
             subpages.append(full_url)
 
     return list(set(subpages))  # removes duplicates
