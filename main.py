@@ -1,5 +1,6 @@
 import os
 import requests
+import argparse
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 from datetime import datetime
@@ -11,6 +12,11 @@ def create_directory(path):
 def save_html(content, path):
     with open(path, 'w', encoding='utf-8') as file:
         file.write(content)
+
+def get_lines_from_file(file_path):
+    with open(file_path, 'r') as file:
+        whitelist = file.read().splitlines()
+    return whitelist
 
 def download_page(url):
     response = requests.get(url)
@@ -88,11 +94,25 @@ def convert_links_to_absolute(base_url, page_directory, html_content):
 
     return str(soup)
 
-def main(base_url, whitelist):
+def get_args():
+    parser = argparse.ArgumentParser(description="Download a website and its subpages")
+    parser.add_argument("-url", "--base_url", help="Path to the base URL", required=True)
+    parser.add_argument("-w", "--whitelist", help="Whitelist of URLs to download", nargs='+', default=[])
+    parser.add_argument("-wf", "--whitelist_file", help="Path to a file containing URLs to download", default=None)
+    parser.add_argument("-o", "--output", help="Output directory for the downloaded pages", default="")
+
+    args = parser.parse_args()
+    return args
+
+def main(base_url, whitelist, pages_directory):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     sanitized_base_url_name = sanitize_directory_name(base_url.replace("https://", "").replace("http://", "").replace("/", ""))
 
-    pages_directory = os.path.join("pages", f"{timestamp}_{sanitized_base_url_name}")
+    if pages_directory == "":
+        pages_directory = os.path.join("pages", f"{timestamp}_{sanitized_base_url_name}")
+    else:
+        pages_directory = os.path.join(pages_directory, f"{timestamp}_{sanitized_base_url_name}")
+
     create_directory(pages_directory)
 
     base_html = download_page(base_url)
@@ -124,7 +144,17 @@ def main(base_url, whitelist):
             print(f"Content of {subpage_url} is downloaded and saved.")
 
 if __name__ == "__main__":
-    base_url = ''
-    whitelist = []
+    args = get_args()
 
-    main(base_url, whitelist)
+    if args.whitelist and args.whitelist_file:
+        print("Please provide either a whitelist or a whitelist file, not both.")
+        exit(1)
+
+    base_url = args.base_url
+    whitelist = args.whitelist
+    pages = args.output
+
+    if args.whitelist_file:
+        whitelist = get_lines_from_file(args.whitelist_file)
+
+    main(base_url, whitelist, pages)
