@@ -8,7 +8,7 @@
 This web scraper allows you to download a website, including CSS and Navigation. This tool is ideal for creating offline versions of websites for archival or local browsing purposes.
 
 ## Prerequisites
-- Python 3.x
+- [Python 3.x](https://www.python.org/downloads/)
 - [BeautifulSoup](https://pypi.org/project/beautifulsoup4/)
 - [Requests](https://pypi.org/project/requests/)
 
