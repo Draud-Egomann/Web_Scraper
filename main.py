@@ -81,10 +81,8 @@ def convert_links_to_absolute(base_url, page_directory, html_content):
         parsed_url = urlparse(absolute_url)
         local_filename = sanitize_directory_name(parsed_url.netloc + parsed_url.path)
 
-        # Replace the last slash in the path with an underscore
-        if '/' in local_filename:
-            last_slash_index = local_filename.rfind('/')
-            local_filename = local_filename[:last_slash_index] + '_' + local_filename[last_slash_index + 1:]
+        # cut all / from the link and replace it with _
+        local_filename = local_filename.replace("/", "_")
 
         local_filename += ".html"
         local_filepath = os.path.join(page_directory, local_filename)
