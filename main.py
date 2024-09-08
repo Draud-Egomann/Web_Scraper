@@ -84,6 +84,11 @@ def convert_links_to_absolute(base_url, page_directory, html_content):
         # cut all / from the link and replace it with _
         local_filename = local_filename.replace("/", "_")
 
+        # ignore if third party link
+        if not absolute_url.startswith(base_url):
+            print(f"Skipping {absolute_url} as it is a third party link.")
+            continue
+
         local_filename += ".html"
         local_filepath = os.path.join(page_directory, local_filename)
 
