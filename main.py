@@ -81,6 +81,10 @@ def convert_links_to_absolute(base_url, page_directory, html_content):
         parsed_url = urlparse(absolute_url)
         local_filename = sanitize_directory_name(parsed_url.netloc + parsed_url.path)
 
+        # if local_filename is the a link to the base_url, then set it to index.html
+        if local_filename == base_url.replace("https://", "").replace("http://", ""):
+            local_filename = "index"
+
         # cut all / from the link and replace it with _
         local_filename = local_filename.replace("/", "_")
 
