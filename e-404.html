@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 Not Found</title>
+  <style>
+    body,
+    html {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #ff7e5f, #feb47b, #86a8e7, #91eae4);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+      color: #ffffff;
+    }
+
+    @keyframes gradientBG {
+      0% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
+
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    .container {
+      text-align: center;
+    }
+
+    .container h1 {
+      font-size: 10rem;
+      margin: 0;
+    }
+
+    .container p {
+      font-size: 1.5rem;
+      margin: 0;
+      margin-top: 20px;
+    }
+
+    .container a {
+      display: inline-block;
+      margin-top: 40px;
+      padding: 15px 30px;
+      font-size: 1rem;
+      color: #ffffff;
+      text-decoration: none;
+      background-color: #ff7e5f;
+      border-radius: 30px;
+      transition: background-color 0.3s ease;
+    }
+
+    .container a:hover {
+      background-color: #feb47b;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>404</h1>
+    <p>Oops! The page you're looking for can't be found.</p>
+    <a href="index.html">Go Home</a>
+  </div>
+</body>
+
+</html>
