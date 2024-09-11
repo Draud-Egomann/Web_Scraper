@@ -2,7 +2,7 @@ import os
 import requests
 import argparse
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin
 from datetime import datetime
 
 def create_directory(path):
@@ -48,7 +48,11 @@ def find_subpages(base_url, html_content, whitelist):
     return list(set(subpages))  # removes duplicates
 
 def sanitize_directory_name(name):
-    invalid_chars = [":", "*", "?", "\"", "<", ">", "|", "\\"]
+    # Remove leading slash if present
+    if name.startswith("/"):
+        name = name[1:]
+
+    invalid_chars = [":", "*", "?", "\"", "<", ">", "|", "\\", "/"]
     for char in invalid_chars:
         name = name.replace(char, "_")
     return name
@@ -69,35 +73,29 @@ def embed_css(base_url, html_content):
     
     return str(soup)
 
-def convert_links_to_absolute(base_url, page_directory, html_content):
+def convert_links_to_relative(base_url, html_content):
     soup = BeautifulSoup(html_content, 'html.parser')
     links = soup.find_all('a', href=True)
 
     for link in links:
         href = link['href']
         absolute_url = urljoin(base_url, href)
+        
+        # if the first char is a /, remove it
+        local_filename = sanitize_directory_name(href)
 
-        # Generate the local path to the file
-        parsed_url = urlparse(absolute_url)
-        local_filename = sanitize_directory_name(parsed_url.netloc + parsed_url.path)
-
-        # if local_filename is the a link to the base_url, then set it to index.html
-        if local_filename == base_url.replace("https://", "").replace("http://", ""):
+        # If the local filename is empty, its the index page
+        if local_filename == "":
             local_filename = "index"
 
-        # cut all / from the link and replace it with _
-        local_filename = local_filename.replace("/", "_")
-
-        # ignore if third party link
-        if not absolute_url.startswith(base_url):
-            print(f"Skipping {absolute_url} as it is a third party link.")
+        # Ignore third-party links
+        if local_filename.startswith("http"):
+            print(f"Skipping {absolute_url} as it is a third-party link.")
             continue
 
-        local_filename += ".html"
-        local_filepath = os.path.join(page_directory, local_filename)
-
-        # Update the href to the correct local file path
-        link['href'] = "file://" + os.path.abspath(local_filepath)
+        # Update the href to the correct relative file path
+        local_filename = f"./{local_filename}.html"
+        link['href'] = local_filename
 
     return str(soup)
 
@@ -130,7 +128,7 @@ def main(base_url, whitelist, pages_directory):
     base_html_with_css = embed_css(base_url, base_html)
 
     # Convert links to absolute paths with .html suffix
-    base_html_with_links = convert_links_to_absolute(base_url, pages_directory, base_html_with_css)
+    base_html_with_links = convert_links_to_relative(base_url, base_html_with_css)
     save_html(base_html_with_links, os.path.join(pages_directory, 'index.html'))
 
     subpages = find_subpages(base_url, base_html, whitelist)
@@ -143,7 +141,7 @@ def main(base_url, whitelist, pages_directory):
             html_with_css = embed_css(base_url, html_content)
 
             # Convert links to absolute paths with .html suffix
-            html_with_links = convert_links_to_absolute(base_url, pages_directory, html_with_css)
+            html_with_links = convert_links_to_relative(base_url, html_with_css)
 
             subpage_name = sanitize_directory_name(subpage_url.replace("https://", "").replace("http://", "").replace("/", "_"))
             subpage_path = os.path.join(pages_directory, f"{subpage_name}.html")
