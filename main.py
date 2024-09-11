@@ -143,7 +143,7 @@ def main(base_url, whitelist, pages_directory):
             # Convert links to absolute paths with .html suffix
             html_with_links = convert_links_to_relative(base_url, html_with_css)
 
-            subpage_name = sanitize_directory_name(subpage_url.replace("https://", "").replace("http://", "").replace("/", "_"))
+            subpage_name = sanitize_directory_name(subpage_url.replace(base_url, "").replace("/", "_"))
             subpage_path = os.path.join(pages_directory, f"{subpage_name}.html")
             save_html(html_with_links, subpage_path)
             print(f"Content of {subpage_url} is downloaded and saved.")
